@@ -1,0 +1,23 @@
+name: Interactive architecture build
+on:
+  pull_request:
+    paths:
+      - 'architecture-map/**'
+      - '.github/workflows/architecture-build.yml'
+  push:
+    paths:
+      - 'architecture-map/**'
+      - '.github/workflows/architecture-build.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: architecture-map
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
