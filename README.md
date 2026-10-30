@@ -19,7 +19,7 @@ export TEST_DATABASE_URL='postgresql+psycopg://demo:demo@localhost:5432/atomicit
 python -m pytest -q
 ```
 
-Tests cover: (1) a stale checkpoint update rolling back its associated observation; (2) two competing worker sessions, with exactly one successful commit.
+Tests cover: (1) a stale checkpoint update rolling back its associated observation; (2) two competing worker sessions, with exactly one successful commit; (3) an interruption after both uncommitted writes, proving full rollback; and (4) a duplicate external ID rejected by a database uniqueness constraint.\n\nGitHub Actions runs these PostgreSQL integration tests using a disposable PostgreSQL 16 service. A green workflow run is the evidence that the tests actually passed.
 
 **Safety:** Tests drop and recreate tables. Run **only** against a disposable database. Do not use a shared or production database.
 
