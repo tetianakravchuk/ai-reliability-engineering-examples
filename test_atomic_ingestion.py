@@ -40,3 +40,25 @@ def test_two_workers_one_commit(engine):
         results = list(pool.map(worker, ['book-a', 'book-b']))
     assert sorted(results) == ['committed', 'stale']
     assert counts(engine) == (1, 1)
+
+def test_interrupted_transaction_rolls_back_observation(engine):
+    """A failure after inserting data must leave the database unchanged."""
+    from sqlalchemy import text
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        with Session(engine) as session:
+            with session.begin():
+                session.add(Observation(checkpoint_id=1, external_id="book-interrupted"))
+                session.flush()
+                session.execute(text(
+                    "UPDATE checkpoints SET version = version + 1 WHERE id = :id"
+                ), {"id": 1})
+                raise RuntimeError("simulated crash")
+    assert counts(engine) == (0, 0)
+
+def test_duplicate_external_id_is_rejected(engine):
+    """The unique identifier prevents replay duplicates."""
+    from sqlalchemy.exc import IntegrityError
+    ingest(engine, 1, 0, "book-a")
+    with pytest.raises(IntegrityError):
+        ingest(engine, 1, 1, "book-a")
+    assert counts(engine) == (1, 1)
